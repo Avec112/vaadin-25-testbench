@@ -13,6 +13,8 @@
     <properties>
         <java.version>25</java.version>
         <vaadin.version>25.2.8</vaadin.version>
+        <!-- Not managed by the Vaadin 25.2 BOM. Bump together with Vaadin; from 25.3 this equals the Vaadin version. -->
+        <browserless-test.version>1.1.2</browserless-test.version>
     </properties>
 
     <parent>
@@ -113,7 +115,8 @@
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
-            <artifactId>vaadin-testbench-unit-junit6</artifactId>
+            <artifactId>browserless-test-spring</artifactId>
+            <version>${browserless-test.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
