@@ -220,6 +220,26 @@ class CaseListViewTest extends AbstractViewTest {
         }
     }
 
+    @Nested
+    @DisplayName("switching role")
+    class RoleSwitch {
+
+        @Test
+        @DisplayName("to case handler hides the New case button")
+        void switchingToCaseHandlerHidesNewCase() {
+            navigate(CaseListView.class);
+
+            test(roleSelector()).selectItem("Case handler");
+
+            assertThat($(Button.class).withId("new-case").exists()).isFalse();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Select<Role> roleSelector() {
+        return $(Select.class).id("role-selector");
+    }
+
     @SuppressWarnings("unchecked")
     private Select<CaseStatus> statusFilter() {
         return $(Select.class).id("status-filter");

@@ -22,6 +22,7 @@ import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
@@ -477,6 +478,32 @@ class CaseViewTest extends AbstractViewTest {
         }
     }
 
+    @Nested
+    @DisplayName("switching role")
+    class RoleSwitch {
+
+        @Test
+        @DisplayName("the selector starts at the current role")
+        void selectorShowsCurrentRole() {
+            actAs(Role.CASE_HANDLER);
+            openCase("Customer visit in Bergen");
+
+            assertThat(roleSelector().getValue()).isEqualTo(Role.CASE_HANDLER);
+        }
+
+        @Test
+        @DisplayName("rebuilds the page with the new role's buttons")
+        void switchingRoleRebuildsButtons() {
+            openCase("Customer visit in Bergen");
+            assertThat(visibleActionButtons()).isEmpty();
+
+            test(roleSelector()).selectItem("Case handler");
+
+            assertThat(getCurrentView()).isInstanceOf(CaseView.class);
+            assertThat(visibleActionButtons()).containsExactlyInAnyOrder("approve", "reject");
+        }
+    }
+
     static Stream<Arguments> statusAndRole() {
         return Stream.of(CaseStatus.values())
                 .flatMap(status -> Stream.of(Role.values()).map(role -> arguments(status, role)));
@@ -582,5 +609,10 @@ class CaseViewTest extends AbstractViewTest {
 
     Checkbox urgentField() {
         return $(Checkbox.class).id("urgent");
+    }
+
+    @SuppressWarnings("unchecked")
+    Select<Role> roleSelector() {
+        return $(Select.class).id("role-selector");
     }
 }
