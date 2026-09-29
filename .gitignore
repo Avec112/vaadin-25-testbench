@@ -4,6 +4,7 @@
 .settings
 .project
 .classpath
+.serena/
 
 *.iml
 .DS_Store
