@@ -47,7 +47,9 @@ mvn verify -Pit -Dit.test=SomeIT       # single end-to-end test class
   them; views use them to decide which buttons to show. Tests derive expected buttons from `CaseActions` instead of
   repeating the rules.
 - Test layout: `domain`/`service` plain JUnit; `views` browserless tests extending `AbstractViewTest`
-  (resets `CaseService` seed data before each test); `it` end-to-end tests extending `AbstractIT`, using page objects
+  (resets `CaseService` seed data before each test), except `CaseRejectLocatorTest`, which deliberately uses the
+  locator API (`SpringBrowserlessApplicationContext` + `BrowserlessUIContext`, no base class) as a side-by-side
+  comparison with `CaseViewTest`; `it` end-to-end tests extending `AbstractIT`, using page objects
   in `it/pages`. End-to-end tests create their own data with unique titles because the app keeps running between
   tests.
 - The `it` Maven profile starts the app on port 8081 with `--vaadin.launch-browser=false`; `-Dheadless=false` shows

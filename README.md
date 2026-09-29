@@ -35,5 +35,6 @@ mvn verify -Pit -Dheadless=false     # watch the browser
 - `src/main/java/.../service` — in-memory `CaseService` and `CurrentUser` (the selected role)
 - `src/main/java/.../views` — `MainLayout`, `CaseListView`, `CaseView`
 - `src/test/java/.../domain`, `.../service` — plain unit tests
-- `src/test/java/.../views` — browserless UI tests (`SpringBrowserlessTest`)
+- `src/test/java/.../views` — browserless UI tests (`SpringBrowserlessTest`); `CaseRejectLocatorTest` shows one of
+  them rewritten with the newer locator API (`findButton().withText("Reject").click()`)
 - `src/test/java/.../it` — end-to-end tests (`BrowserTestBase`) and page objects
