@@ -41,4 +41,14 @@ mvn verify -Pit -Dit.test=SomeIT       # single end-to-end test class
 - Root package is `com.example.application` (the Maven groupId is `io.github.avec112`). If the package is ever renamed, update `vaadin.allowed-packages` in `src/main/resources/application.properties` as well.
 - `MainLayout` is the `@Layout` for all views; the side navigation is built from `MenuConfiguration`, so views appear in the menu via `@Menu`.
 - `src/main/bundles/` holds the Vaadin-generated frontend dev/prod bundles and is committed intentionally (Vaadin recommends this so others do not have to rebuild it). Files under `src/main/frontend/generated/` are generated and ignored.
-- The application does not use Spring Security. Roles are simulated in the UI so TestBench is the focus; keep role lookup behind a small service so it could be replaced by Spring Security later.
+- The application does not use Spring Security. The role is chosen in the top bar and stored by `CurrentUser` in the
+  `VaadinSession`; views only depend on `CurrentUser`, so it could be backed by Spring Security later.
+- Workflow rules live in `domain/CaseActions` (which actions a role may take in which status). `CaseService` enforces
+  them; views use them to decide which buttons to show. Tests derive expected buttons from `CaseActions` instead of
+  repeating the rules.
+- Test layout: `domain`/`service` plain JUnit; `views` browserless tests extending `AbstractViewTest`
+  (resets `CaseService` seed data before each test); `it` end-to-end tests extending `AbstractIT`, using page objects
+  in `it/pages`. End-to-end tests create their own data with unique titles because the app keeps running between
+  tests.
+- The `it` Maven profile starts the app on port 8081 with `--vaadin.launch-browser=false`; `-Dheadless=false` shows
+  the browser.

@@ -1,51 +1,38 @@
 # vaadin-25-testbench
 
-This project can be used as a starting point to create your own Vaadin application with Spring Boot.
-It contains all the necessary configuration and some placeholder files to get you started.
+A demo of UI testing a Vaadin Flow application at three levels: domain unit tests, browserless UI tests and
+end-to-end browser tests with Vaadin TestBench. The application is a small case-handling workflow: cases go from
+Draft to Submitted, In review and Approved or Rejected, and what a user may do depends on the status and on the role
+chosen in the top bar ("Act as").
 
-## Running the application
+- [What to check when a page is presented](docs/ui-test-checklist.md)
+- [Which level should a UI test be on?](docs/testing-levels.md)
 
-Open the project in an IDE. You can download the [IntelliJ community edition](https://www.jetbrains.com/idea/download) if you do not have a suitable IDE already.
-Once opened in the IDE, locate the `Application` class and run the main method using "Debug".
+## Requirements
 
-For more information on installing in various IDEs, see [how to import Vaadin projects to different IDEs](https://vaadin.com/docs/latest/getting-started/import).
+- Java 25 and Maven
+- For end-to-end tests: a Vaadin Pro license (`~/.vaadin/proKey` or `~/.vaadin/offlineKey`). Chrome for Testing is
+  downloaded automatically on the first run.
+  - The first run opens a browser so you can log in to vaadin.com, which creates `proKey`.
+  - Non-interactive environments such as CI need `offlineKey`, downloaded from vaadin.com.
+  - If Chromium is installed as a snap and fails with "DevToolsActivePort file doesn't exist", see the guarded
+    workaround in `AbstractIT`.
 
-If you install the Vaadin plugin for IntelliJ, you should instead launch the `Application` class using "Debug using HotswapAgent" to see updates in the Java code immediately reflected in the browser.
-
-## Deploying to Production
-
-The project is a standard Maven project. To create a production build, call 
+## Running
 
 ```
-./mvnw clean package
+mvn spring-boot:run                  # the app on http://localhost:8080
+mvn test                             # domain and browserless UI tests
+mvn test -Dtest=CaseViewTest         # one test class
+mvn verify -Pit                      # also end-to-end tests (starts the app on port 8081)
+mvn verify -Pit -Dheadless=false     # watch the browser
 ```
 
-If you have Maven globally installed, you can replace `./mvnw` with `mvn`.
+## Where things are
 
-This will build a JAR file with all the dependencies and front-end resources,ready to be run. The file can be found in the `target` folder after the build completes.
-You then launch the application using 
-```
-java -jar target/vaadin-25-testbench-1.0-SNAPSHOT.jar
-```
-
-## Project structure
-
-- `MainLayout.java` in `src/main/java` contains the navigation setup (i.e., the
-  side/top bar and the main menu). This setup uses
-  [App Layout](https://vaadin.com/docs/components/app-layout).
-- `views` package in `src/main/java` contains the server-side Java views of your application.
-- `views` folder in `src/main/frontend` contains the client-side JavaScript views of your application.
-- `themes` folder in `src/main/frontend` contains the custom CSS styles.
-
-## Useful links
-
-- Read the documentation at [vaadin.com/docs](https://vaadin.com/docs).
-- Follow the tutorial at [vaadin.com/docs/latest/tutorial/overview](https://vaadin.com/docs/latest/tutorial/overview).
-- Create new projects at [start.vaadin.com](https://start.vaadin.com/).
-- Search UI components and their usage examples at [vaadin.com/docs/latest/components](https://vaadin.com/docs/latest/components).
-- View use case applications that demonstrate Vaadin capabilities at [vaadin.com/examples-and-demos](https://vaadin.com/examples-and-demos).
-- Build any UI without custom CSS by discovering Vaadin's set of [CSS utility classes](https://vaadin.com/docs/styling/lumo/utility-classes). 
-- Find a collection of solutions to common use cases at [cookbook.vaadin.com](https://cookbook.vaadin.com/).
-- Find add-ons at [vaadin.com/directory](https://vaadin.com/directory).
-- Ask questions on [Stack Overflow](https://stackoverflow.com/questions/tagged/vaadin) or join our [Forum](https://vaadin.com/forum).
-- Report issues, create pull requests in [GitHub](https://github.com/vaadin).
+- `src/main/java/.../domain` — the case model and the workflow rules (`CaseActions`)
+- `src/main/java/.../service` — in-memory `CaseService` and `CurrentUser` (the selected role)
+- `src/main/java/.../views` — `MainLayout`, `CaseListView`, `CaseView`
+- `src/test/java/.../domain`, `.../service` — plain unit tests
+- `src/test/java/.../views` — browserless UI tests (`SpringBrowserlessTest`)
+- `src/test/java/.../it` — end-to-end tests (`BrowserTestBase`) and page objects
