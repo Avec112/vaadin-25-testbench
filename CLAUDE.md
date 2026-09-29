@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A learning/demo project showing how to UI-test a Vaadin Flow application with Vaadin TestBench, at two levels:
 
-- **Browserless UI unit tests** (`vaadin-testbench-unit-junit6`) — run in the JVM, no browser.
-- **End-to-end browser tests** (`vaadin-testbench-core`, Selenium) — run against the started application.
+- **Browserless UI unit tests** (`browserless-test-spring`, base class `SpringBrowserlessTest`) — run in the JVM, no browser, no license needed.
+- **End-to-end browser tests** (`vaadin-testbench-junit6`, Selenium, base class `BrowserTestBase`) — run against the started application; needs a Vaadin Pro license.
 
 The audience is developers who have good unit/integration test coverage but no UI tests yet, and want to learn what to verify and at which level. Tests are meant to be read and copied, so they should be clear and demonstrate one pattern at a time.
 
@@ -32,8 +32,9 @@ mvn verify -Pit -Dit.test=SomeIT       # single end-to-end test class
 ## Versions and dependencies
 
 - Java 25, Spring Boot 4.1.x, Vaadin **25.2.8** (pinned deliberately; start.vaadin.com generated 25.3.0). Do not upgrade Vaadin unless asked.
-- `browserless-test-spring` (what start.vaadin.com generates for 25.3+) does not exist in 25.2; the 25.2 equivalent is `com.vaadin:vaadin-testbench-unit-junit6` (version managed by the Vaadin BOM).
-- TestBench is commercial. It needs a Vaadin Pro license: `~/.vaadin/proKey` (created by logging in via the browser prompt in dev mode) or `~/.vaadin/offlineKey` (downloaded from vaadin.com, needed for non-interactive runs such as CI).
+- Browserless UI tests use `com.vaadin:browserless-test-spring` **1.1.2** (Apache 2.0, built for Vaadin 25.2). It is not in the 25.2 BOM, so its version is pinned in the `browserless-test.version` property; bump it together with Vaadin (from 25.3 its version equals the Vaadin version). Do not use `vaadin-testbench-unit-*`: its `SpringUIUnitTest`/`UIUnitTest` are deprecated for removal in favor of `com.vaadin.browserless`.
+- Browserless queries (`$(...)`) only match effectively visible components.
+- End-to-end tests use `com.vaadin:vaadin-testbench-junit6:${vaadin.version}` (TestBench core + all element classes). TestBench is commercial and needs a Vaadin Pro license: `~/.vaadin/proKey` (created by logging in via the browser prompt in dev mode) or `~/.vaadin/offlineKey` (downloaded from vaadin.com, needed for non-interactive runs such as CI).
 
 ## Structure notes
 

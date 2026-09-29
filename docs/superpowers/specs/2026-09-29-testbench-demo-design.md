@@ -35,8 +35,8 @@ TestBench needs a Vaadin Pro license. `~/.vaadin/` currently only holds `userKey
 | Level | Tooling | Covers | Speed |
 |---|---|---|---|
 | Domain | plain JUnit | status/role rules, state transitions | milliseconds |
-| UI unit (browserless) | `SpringUIUnitTest` (`vaadin-testbench-unit-junit6`) | every view: initial state, button visibility per status×role, each validation rule, filtering, sorting, dialogs, navigation | fast, no browser |
-| End-to-end | TestBench + Selenium (`vaadin-testbench-core-junit6`) | a few key user flows, overlapping with UI unit tests | slow, real browser |
+| UI unit (browserless) | `SpringBrowserlessTest` (`browserless-test-spring`) | every view: initial state, button visibility per status×role, each validation rule, filtering, sorting, dialogs, navigation | fast, no browser |
+| End-to-end | TestBench + Selenium (`vaadin-testbench-junit6`) | a few key user flows, overlapping with UI unit tests | slow, real browser |
 
 UI unit tests verify that **the UI reflects the rules**; they do not re-test the rules themselves. End-to-end tests verify **whole flows**, not each rule.
 
@@ -46,14 +46,13 @@ Root package stays `com.example.application` (kept in sync with `vaadin.allowed-
 
 ### 3.1 Domain (`...application.domain`)
 
-- `Case`: `id` (Long), `title`, `category`, `amount`, `requestedDate`, `description`, `urgent`, `status`, `rejectionReason`.
-  Bean validation annotations:
-  - `title`: `@NotBlank`, `@Size(min = 5, max = 100)`
-  - `category`: `@NotNull`
-  - `amount` (`Integer`, whole currency units): `@NotNull`, `@Min(1)`, `@Max(50000)`
-  - `requestedDate` (`LocalDate`): `@NotNull`, `@FutureOrPresent`
-  - `description`: optional, `@Size(max = 1000)`
-  - `urgent`: `boolean`
+- `Case`: `id` (Long), `title`, `category`, `amount` (`Integer`, whole currency units), `requestedDate` (`LocalDate`), `description`, `urgent` (`boolean`), `status`, `rejectionReason`. A plain mutable bean with a `copy()` method; views always edit a copy.
+- Validation rules (enforced by the form's `Binder`, see §3.3), with the exact messages tests assert on:
+  - `title`: required ("Title is required"), 5–100 characters ("Title must be 5-100 characters")
+  - `category`: required ("Category is required")
+  - `amount`: required ("Amount is required"), 1–50 000 ("Amount must be between 1 and 50000")
+  - `requestedDate`: required ("Requested date is required"), not in the past ("Requested date cannot be in the past")
+  - `description`: optional, at most 1000 characters ("Description must be at most 1000 characters")
 - `CaseCategory`: `PURCHASE`, `TRAVEL`, `TRAINING`.
 - `CaseStatus`: `DRAFT → SUBMITTED → IN_REVIEW → APPROVED | REJECTED`.
 - `Role`: `SUBMITTER`, `CASE_HANDLER`.
@@ -74,7 +73,7 @@ A case is **editable** only when the role is `SUBMITTER` and the status is `DRAF
 ### 3.2 Services (`...application.service`)
 
 - `CaseService` (singleton): in-memory store with deterministic seed data of 8 cases covering every status and every category, with distinct titles, amounts and dates so filter and sort assertions are exact. DRAFT seed cases have future `requestedDate`s. Methods: `findAll()`, `findById(id)`, `save(case)`, `delete(id)`, `apply(id, action, role)` (and `reject(id, reason, role)`), and `reset()` which restores the seed data. `apply` checks `CaseActions` and throws `IllegalStateException` for a disallowed action, so the UI cannot bypass the rules.
-- `CurrentUser` (`@VaadinSessionScope`): holds the selected `Role`, default `SUBMITTER`. The only place views ask for the role — a later Spring Security implementation replaces this class only.
+- `CurrentUser` (singleton Spring bean): stores the selected `Role` as an attribute of the current `VaadinSession`, default `SUBMITTER`. Being a singleton, it can be injected into views and tests alike. It is the only place views ask for the role — a later Spring Security implementation replaces this class only.
 
 ### 3.3 Views (`...application.views`)
 
@@ -88,7 +87,7 @@ A case is **editable** only when the role is `SUBMITTER` and the status is `DRAF
 
 **`CaseView`** — route `case/:caseId` (`new` or a numeric id), not in the menu.
 - Fields: `title`, `category` (`ComboBox`), `amount` (`IntegerField`), `requested-date` (`DatePicker`), `description` (`TextArea`), `urgent` (`Checkbox`). A read-only status indicator, id `status`.
-- Bound with `BeanValidationBinder<Case>`; fields read-only unless editable (§3.1).
+- Bound with an explicit `Binder<Case>` validator chain (`asRequired(...)` first, then range/length validators). Bean validation annotations are not used: a blank title would violate both `@NotBlank` and `@Size`, and which message is shown would be nondeterministic. Fields are read-only unless editable (§3.1).
 - Buttons with ids `save`, `submit`, `delete`, `start-review`, `approve`, `reject`, plus `back` (always visible). Visibility comes from `CaseActions.allowed(...)`; hidden buttons are not rendered as visible, not merely disabled.
 - **Save**: validates; on errors, fields show messages and nothing is stored. On success: notification "Case saved" and navigation to the list.
 - **Submit**: validates and saves, then moves to `SUBMITTED`; notification "Case submitted"; back to list.
@@ -104,10 +103,12 @@ Every component a test touches has a stable id (listed above). Tests locate comp
 
 ## 4. Browserless UI unit tests
 
-Dependency: `com.vaadin:vaadin-testbench-unit-junit6` (already present, BOM-managed).
+Dependency: `com.vaadin:browserless-test-spring:1.1.2` (test scope, Apache 2.0, built against Vaadin 25.2). It replaces `vaadin-testbench-unit-junit6`, whose `SpringUIUnitTest` is deprecated for removal since TestBench 10.1 in favor of the `com.vaadin.browserless` package. It is not managed by the Vaadin 25.2 BOM, so its version is set explicitly in a `browserless-test.version` property. From Vaadin 25.3 it follows the Vaadin version.
 
-- `AbstractViewTest extends SpringUIUnitTest`: `@BeforeEach` calls `caseService.reset()` and sets the role to `SUBMITTER`; helper `actAs(Role)`.
-- Components are found with `$(Type.class).id("...")` and driven with `test(component)`.
+Browserless tests need **no** Vaadin license; only the end-to-end tests do.
+
+- `AbstractViewTest extends SpringBrowserlessTest`, annotated `@SpringBootTest` and `@ViewPackages(packages = "com.example.application.views")`: `@BeforeEach` calls `caseService.reset()` and sets the role to `SUBMITTER`; helper `actAs(Role)`.
+- Components are found with `$(Type.class).id("...")` and driven with `test(component)`. Queries only match **effectively visible** components, so "button is hidden" is asserted as "no visible button with that id exists".
 - JUnit `@Nested` classes and `@DisplayName` keep the reports readable.
 
 **`CaseActionsTest`** (plain JUnit, domain) — `@ParameterizedTest` over every status × role, asserting the exact allowed set. Plus transition tests on `CaseService.apply` (disallowed action throws).
@@ -128,7 +129,7 @@ Dependency: `com.vaadin:vaadin-testbench-unit-junit6` (already present, BOM-mana
 
 ## 5. End-to-end browser tests
 
-Dependency added: `com.vaadin:vaadin-testbench-core-junit6` (test scope, BOM-managed).
+Dependency added: `com.vaadin:vaadin-testbench-junit6:${vaadin.version}` (test scope). It aggregates `vaadin-testbench-core-junit6` and all component element classes.
 
 ### 5.1 Running
 
@@ -139,7 +140,7 @@ Dependency added: `com.vaadin:vaadin-testbench-core-junit6` (test scope, BOM-man
 
 ### 5.2 Structure
 
-- `AbstractIT`: creates the driver, opens the base URL, takes a screenshot on failure into `error-screenshots/` (already git-ignored). The exact TestBench base class for 25.2 / JUnit 6 is confirmed during planning.
+- `AbstractIT extends BrowserTestBase implements DriverSupplier`: test methods use `@BrowserTest`; `createDriver()` builds a `ChromeDriver` (headless unless `-Dheadless=false`); `open(path)` loads a route on the test port. `BrowserTestBase` registers TestBench's `ScreenshotOnFailureExtension`, which writes to `error-screenshots/` (already git-ignored).
 - Page objects in `...it.pages`, built on TestBench element classes (`TextFieldElement`, `GridElement`, `ButtonElement`, `SelectElement`, `ComboBoxElement`, `DatePickerElement`, `DialogElement`, `ConfirmDialogElement`, `NotificationElement`), locating components by the ids in §3.4:
   - `CaseListPage`: filter by title/status, open case by title, click "New case", read row statuses.
   - `CasePage`: fill fields, click actions, read status and field error messages, handle reject/delete dialogs.
