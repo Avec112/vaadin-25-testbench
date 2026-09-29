@@ -119,6 +119,12 @@
             <version>${browserless-test.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-testbench-junit6</artifactId>
+            <version>${vaadin.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -146,6 +152,12 @@
     <profiles>
         <profile>
             <id>it</id>
+            <properties>
+                <!-- The app under test gets its own port, so a dev server on 8080 can keep running. -->
+                <it.port>8081</it.port>
+                <!-- Run with -Dheadless=false to watch the browser. -->
+                <headless>true</headless>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -158,6 +170,13 @@
                                 <goals>
                                     <goal>start</goal>
                                 </goals>
+                                <configuration>
+                                    <arguments>
+                                        <argument>--server.port=${it.port}</argument>
+                                        <argument>--vaadin.launch-browser=false</argument>
+                                    </arguments>
+                                    <maxAttempts>120</maxAttempts>
+                                </configuration>
                             </execution>
                             <execution>
                                 <id>stop-spring-boot</id>
@@ -184,6 +203,10 @@
                         <configuration>
                             <trimStackTrace>false</trimStackTrace>
                             <enableAssertions>true</enableAssertions>
+                            <systemPropertyVariables>
+                                <it.port>${it.port}</it.port>
+                                <headless>${headless}</headless>
+                            </systemPropertyVariables>
                         </configuration>
                     </plugin>
                 </plugins>
