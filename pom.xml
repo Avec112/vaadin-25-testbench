@@ -4,7 +4,7 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <!-- Project from https://start.vaadin.com/project/c859dd52-1e64-4fff-a4e5-ddb8b1eb1d98 -->
-    <groupId>com.example.application</groupId>
+    <groupId>io.github.avec112</groupId>
     <artifactId>vaadin-25-testbench</artifactId>
     <name>vaadin-25-testbench</name>
     <version>1.0-SNAPSHOT</version>
@@ -12,7 +12,7 @@
 
     <properties>
         <java.version>25</java.version>
-        <vaadin.version>25.3.0</vaadin.version>
+        <vaadin.version>25.2.8</vaadin.version>
     </properties>
 
     <parent>
@@ -113,7 +113,7 @@
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
-            <artifactId>browserless-test-spring</artifactId>
+            <artifactId>vaadin-testbench-unit-junit6</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
