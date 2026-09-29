@@ -50,13 +50,15 @@ public abstract class AbstractIT extends BrowserTestBase implements DriverSuppli
 
     /**
      * Chromium installed as a snap cannot use the temporary profile directory that ChromeDriver creates in /tmp
-     * ("DevToolsActivePort file doesn't exist"). Give it one fixed profile directory inside its own snap storage
-     * instead. Delete this method if you don't use snap-packaged Chromium.
+     * ("DevToolsActivePort file doesn't exist"). Give it a profile directory inside its own snap storage instead.
+     * The directory is named after the worker thread, because test classes run in parallel and Chromium cannot share
+     * a profile between concurrent instances; the directories are reused by later runs, so nothing piles up.
+     * Delete this method if you don't use snap-packaged Chromium.
      */
     private static void useSnapProfileDirectoryIfNeeded(ChromeOptions options) {
         Path snapStorage = Path.of(System.getProperty("user.home"), "snap", "chromium", "common");
         if (Files.isDirectory(snapStorage)) {
-            options.addArguments("--user-data-dir=" + snapStorage.resolve("testbench-profile"));
+            options.addArguments("--user-data-dir=" + snapStorage.resolve("testbench-profile-" + Thread.currentThread().getName()));
         }
     }
 }
