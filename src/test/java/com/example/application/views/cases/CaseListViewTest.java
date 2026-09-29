@@ -8,6 +8,7 @@ import com.example.application.domain.Role;
 import com.example.application.views.AbstractViewTest;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.SortDirection;
@@ -189,6 +190,34 @@ class CaseListViewTest extends AbstractViewTest {
 
     private TextField titleFilter() {
         return $(TextField.class).id("title-filter");
+    }
+
+    @Nested
+    @DisplayName("navigation")
+    class Navigation {
+
+        @Test
+        @DisplayName("clicking a row opens that case")
+        void clickingRowOpensCase() {
+            navigate(CaseListView.class);
+
+            test(grid()).clickRow(0);
+
+            assertThat(getCurrentView()).isInstanceOf(CaseView.class);
+            assertThat($(H2.class).id("case-heading").getText())
+                    .isEqualTo("Case " + caseIdByTitle("Laptop for new developer"));
+        }
+
+        @Test
+        @DisplayName("New case opens an empty form")
+        void newCaseOpensEmptyForm() {
+            navigate(CaseListView.class);
+
+            test($(Button.class).id("new-case")).click();
+
+            assertThat(getCurrentView()).isInstanceOf(CaseView.class);
+            assertThat($(H2.class).id("case-heading").getText()).isEqualTo("New case");
+        }
     }
 
     @SuppressWarnings("unchecked")
