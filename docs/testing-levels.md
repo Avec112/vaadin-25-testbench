@@ -7,11 +7,11 @@ approves a case — and the measured run times of each suite.
 
 | Level | Test | What it proves |
 |---|---|---|
-| Domain | `CaseActionsTest` — `CASE_HANDLER on a IN_REVIEW case may [APPROVE, REJECT]` | The rule is right. |
+| Domain | `CaseActionsTest` — `CASE_HANDLER on an IN_REVIEW case may [APPROVE, REJECT]` | The rule is right. |
 | Browserless UI | `CaseViewTest.Workflow.approve` | The Approve button is shown, calls the service, notifies and navigates. |
 | End-to-end | `CaseLifecycleIT.caseGoesFromDraftToApproved` | Two users can click through the whole flow in a real browser. |
 
-Read the three side by side: the domain test is one line of data, the browserless test is five lines of user
+Read the three side by side: the domain test is one line of data, the browserless test is a few lines of user
 actions, the end-to-end test needs page objects, a running server and a browser.
 
 ## Measured

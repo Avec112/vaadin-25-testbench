@@ -74,8 +74,8 @@ public class CaseListView extends VerticalLayout implements BeforeEnterObserver 
         add(newCase, new HorizontalLayout(titleFilter, statusFilter), grid);
     }
 
-    // Re-evaluated on every navigation: Flow reuses this instance when the route is entered again, and the role
-    // may have changed in between.
+    // Only the visibility of the "new case" button is refreshed on each navigation, because the role may have
+    // changed since the view was last shown. The grid and filters are set up once in the constructor.
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         updateNewCaseVisibility();

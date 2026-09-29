@@ -16,6 +16,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 @SpringBootApplication
 @StyleSheet(Lumo.STYLESHEET)
+@StyleSheet(Lumo.UTILITY_STYLESHEET)
 @StyleSheet("styles.css")
 @Theme(value = "vaadin-25-testbench")
 public class Application implements AppShellConfigurator {

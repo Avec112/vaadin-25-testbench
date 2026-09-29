@@ -34,7 +34,7 @@ mvn verify -Pit -Dit.test=SomeIT       # single end-to-end test class
 - Java 25, Spring Boot 4.1.x, Vaadin **25.2.8** (pinned deliberately; start.vaadin.com generated 25.3.0). Do not upgrade Vaadin unless asked.
 - Browserless UI tests use `com.vaadin:browserless-test-spring` **1.1.2** (Apache 2.0, built for Vaadin 25.2). It is not in the 25.2 BOM, so its version is pinned in the `browserless-test.version` property; bump it together with Vaadin (from 25.3 its version equals the Vaadin version). Do not use `vaadin-testbench-unit-*`: its `SpringUIUnitTest`/`UIUnitTest` are deprecated for removal in favor of `com.vaadin.browserless`.
 - Browserless queries (`$(...)`) only match effectively visible components.
-- End-to-end tests use `com.vaadin:vaadin-testbench-junit6:${vaadin.version}` (TestBench core + all element classes). TestBench is commercial and needs a Vaadin Pro license: `~/.vaadin/proKey` (created by logging in via the browser prompt in dev mode) or `~/.vaadin/offlineKey` (downloaded from vaadin.com, needed for non-interactive runs such as CI).
+- End-to-end tests use `com.vaadin:vaadin-testbench-junit6:${vaadin.version}` (TestBench core + all element classes). TestBench is commercial and needs a Vaadin Pro license: `~/.vaadin/proKey` (created by logging in when the first end-to-end test run opens the vaadin.com login page; TestBench is test-scoped, so dev mode shows no prompt) or `~/.vaadin/offlineKey` (downloaded from vaadin.com, needed for non-interactive runs such as CI).
 
 ## Structure notes
 

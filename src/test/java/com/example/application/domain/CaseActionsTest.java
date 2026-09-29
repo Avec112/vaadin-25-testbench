@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import java.time.LocalDate;
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
@@ -35,16 +36,16 @@ class CaseActionsTest {
 
     static Stream<Arguments> rules() {
         return Stream.of(
-                arguments(DRAFT, SUBMITTER, Set.of(SAVE, SUBMIT, DELETE)),
-                arguments(SUBMITTED, SUBMITTER, Set.<CaseAction>of()),
-                arguments(IN_REVIEW, SUBMITTER, Set.<CaseAction>of()),
-                arguments(APPROVED, SUBMITTER, Set.<CaseAction>of()),
-                arguments(REJECTED, SUBMITTER, Set.<CaseAction>of()),
-                arguments(DRAFT, CASE_HANDLER, Set.<CaseAction>of()),
-                arguments(SUBMITTED, CASE_HANDLER, Set.of(START_REVIEW)),
-                arguments(IN_REVIEW, CASE_HANDLER, Set.of(APPROVE, REJECT)),
-                arguments(APPROVED, CASE_HANDLER, Set.<CaseAction>of()),
-                arguments(REJECTED, CASE_HANDLER, Set.<CaseAction>of()));
+                arguments(DRAFT, SUBMITTER, EnumSet.of(SAVE, SUBMIT, DELETE)),
+                arguments(SUBMITTED, SUBMITTER, EnumSet.noneOf(CaseAction.class)),
+                arguments(IN_REVIEW, SUBMITTER, EnumSet.noneOf(CaseAction.class)),
+                arguments(APPROVED, SUBMITTER, EnumSet.noneOf(CaseAction.class)),
+                arguments(REJECTED, SUBMITTER, EnumSet.noneOf(CaseAction.class)),
+                arguments(DRAFT, CASE_HANDLER, EnumSet.noneOf(CaseAction.class)),
+                arguments(SUBMITTED, CASE_HANDLER, EnumSet.of(START_REVIEW)),
+                arguments(IN_REVIEW, CASE_HANDLER, EnumSet.of(APPROVE, REJECT)),
+                arguments(APPROVED, CASE_HANDLER, EnumSet.noneOf(CaseAction.class)),
+                arguments(REJECTED, CASE_HANDLER, EnumSet.noneOf(CaseAction.class)));
     }
 
     @ParameterizedTest(name = "{1} on a {0} case may {2}")

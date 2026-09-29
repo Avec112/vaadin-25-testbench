@@ -354,6 +354,7 @@ class CaseViewTest extends AbstractViewTest {
 
             assertThat(lastNotificationText()).isEqualTo("Case approved");
             assertThat(statusOf("Customer visit in Bergen")).isEqualTo(CaseStatus.APPROVED);
+            assertThat(getCurrentView()).isInstanceOf(CaseListView.class);
         }
 
         @Test
