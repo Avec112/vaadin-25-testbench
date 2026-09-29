@@ -9,6 +9,7 @@ import com.example.application.service.CaseService;
 import com.example.application.service.CurrentUser;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -58,10 +59,10 @@ public class CaseView extends VerticalLayout implements BeforeEnterObserver, Has
 
     private final Button save = new Button("Save", event -> save());
     private final Button submit = new Button("Submit", event -> submit());
-    private final Button delete = new Button("Delete");
-    private final Button startReview = new Button("Start review");
-    private final Button approve = new Button("Approve");
-    private final Button reject = new Button("Reject");
+    private final Button delete = new Button("Delete", event -> confirmDelete());
+    private final Button startReview = new Button("Start review", event -> startReview());
+    private final Button approve = new Button("Approve", event -> approve());
+    private final Button reject = new Button("Reject", event -> openRejectDialog());
     private final Button back = new Button("Back", event -> backToList());
 
     private final Binder<Case> binder = new Binder<>();
@@ -178,6 +179,32 @@ public class CaseView extends VerticalLayout implements BeforeEnterObserver, Has
                 caseService.apply(saved.getId(), CaseAction.SUBMIT, currentUser.getRole());
             }, "Case submitted");
         }
+    }
+
+    private void startReview() {
+        runAction(() -> caseService.apply(current.getId(), CaseAction.START_REVIEW, currentUser.getRole()),
+                "Review started");
+    }
+
+    private void approve() {
+        runAction(() -> caseService.apply(current.getId(), CaseAction.APPROVE, currentUser.getRole()),
+                "Case approved");
+    }
+
+    private void openRejectDialog() {
+        new RejectDialog(reason -> runAction(
+                () -> caseService.reject(current.getId(), reason, currentUser.getRole()), "Case rejected"))
+                .open();
+    }
+
+    private void confirmDelete() {
+        ConfirmDialog dialog = new ConfirmDialog("Delete case?", "The case will be permanently deleted.", "Delete",
+                event -> runAction(() -> caseService.delete(current.getId(), currentUser.getRole()),
+                        "Case deleted"));
+        dialog.setId("delete-confirm");
+        dialog.setCancelable(true);
+        dialog.setConfirmButtonTheme("error primary");
+        dialog.open();
     }
 
     /**

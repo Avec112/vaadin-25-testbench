@@ -17,7 +17,9 @@ import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.textfield.IntegerField;
@@ -327,6 +329,117 @@ class CaseViewTest extends AbstractViewTest {
             assertThat(getCurrentView()).isInstanceOf(CaseListView.class);
             assertThat(caseService.findById(caseIdByTitle("Laptop for new developer"))).isPresent();
         }
+
+        @Test
+        @DisplayName("a case handler can start the review of a submitted case")
+        void startReview() {
+            actAs(Role.CASE_HANDLER);
+            openCase("Vaadin training course");
+
+            click("start-review");
+
+            assertThat(lastNotificationText()).isEqualTo("Review started");
+            assertThat(getCurrentView()).isInstanceOf(CaseListView.class);
+            assertThat(statusOf("Vaadin training course")).isEqualTo(CaseStatus.IN_REVIEW);
+        }
+
+        @Test
+        @DisplayName("a case handler can approve a case in review")
+        void approve() {
+            actAs(Role.CASE_HANDLER);
+            openCase("Customer visit in Bergen");
+
+            click("approve");
+
+            assertThat(lastNotificationText()).isEqualTo("Case approved");
+            assertThat(statusOf("Customer visit in Bergen")).isEqualTo(CaseStatus.APPROVED);
+        }
+
+        @Test
+        @DisplayName("rejecting without a reason is blocked in the dialog")
+        void rejectWithoutReasonIsBlocked() {
+            actAs(Role.CASE_HANDLER);
+            openCase("Security certification");
+
+            click("reject");
+            click("confirm-reject");
+
+            TextArea reason = $(TextArea.class).id("rejection-reason");
+            assertThat(reason.isInvalid()).isTrue();
+            assertThat(reason.getErrorMessage()).isEqualTo("A reason is required");
+            assertThat($(Dialog.class).withId("reject-dialog").exists()).isTrue();
+            assertThat(statusOf("Security certification")).isEqualTo(CaseStatus.IN_REVIEW);
+        }
+
+        @Test
+        @DisplayName("a reason of only spaces counts as no reason")
+        void rejectWithBlankReasonIsBlocked() {
+            actAs(Role.CASE_HANDLER);
+            openCase("Security certification");
+
+            click("reject");
+            test($(TextArea.class).id("rejection-reason")).setValue("   ");
+            click("confirm-reject");
+
+            assertThat($(TextArea.class).id("rejection-reason").isInvalid()).isTrue();
+            assertThat(statusOf("Security certification")).isEqualTo(CaseStatus.IN_REVIEW);
+        }
+
+        @Test
+        @DisplayName("rejecting with a reason stores the reason")
+        void rejectWithReason() {
+            actAs(Role.CASE_HANDLER);
+            openCase("Security certification");
+
+            click("reject");
+            test($(TextArea.class).id("rejection-reason")).setValue("Not in this year's budget");
+            click("confirm-reject");
+
+            assertThat(lastNotificationText()).isEqualTo("Case rejected");
+            assertThat($(Dialog.class).withId("reject-dialog").exists()).isFalse();
+            Case rejected = caseService.findById(caseIdByTitle("Security certification")).orElseThrow();
+            assertThat(rejected.getStatus()).isEqualTo(CaseStatus.REJECTED);
+            assertThat(rejected.getRejectionReason()).isEqualTo("Not in this year's budget");
+        }
+
+        @Test
+        @DisplayName("cancelling the reject dialog changes nothing")
+        void cancelReject() {
+            actAs(Role.CASE_HANDLER);
+            openCase("Security certification");
+
+            click("reject");
+            click("cancel-reject");
+
+            assertThat($(Dialog.class).withId("reject-dialog").exists()).isFalse();
+            assertThat(getCurrentView()).isInstanceOf(CaseView.class);
+            assertThat(statusOf("Security certification")).isEqualTo(CaseStatus.IN_REVIEW);
+        }
+
+        @Test
+        @DisplayName("cancelling the delete confirmation keeps the case")
+        void cancelDelete() {
+            openCase("Laptop for new developer");
+
+            click("delete");
+            test($(ConfirmDialog.class).id("delete-confirm")).cancel();
+
+            assertThat(caseService.findAll()).hasSize(SEED_SIZE);
+            assertThat(getCurrentView()).isInstanceOf(CaseView.class);
+        }
+
+        @Test
+        @DisplayName("confirming the delete removes the case")
+        void confirmDelete() {
+            openCase("Laptop for new developer");
+
+            click("delete");
+            test($(ConfirmDialog.class).id("delete-confirm")).confirm();
+
+            assertThat(lastNotificationText()).isEqualTo("Case deleted");
+            assertThat(getCurrentView()).isInstanceOf(CaseListView.class);
+            assertThat(caseService.findAll()).hasSize(SEED_SIZE - 1);
+        }
     }
 
     @Nested
@@ -340,6 +453,27 @@ class CaseViewTest extends AbstractViewTest {
             navigate("case/" + caseId, CaseListView.class);
 
             assertThat(lastNotificationText()).isEqualTo("Case not found");
+        }
+    }
+
+    @Nested
+    @DisplayName("when the case changed after the page was loaded")
+    class StaleAction {
+
+        @Test
+        @DisplayName("the action is refused and the page shows the current state")
+        void actionOnChangedCaseIsRefused() {
+            actAs(Role.CASE_HANDLER);
+            openCase("Customer visit in Bergen");
+            // Someone else approves the case while this page is open.
+            caseService.apply(caseIdByTitle("Customer visit in Bergen"), CaseAction.APPROVE, Role.CASE_HANDLER);
+
+            click("approve");
+
+            assertThat(lastNotificationText()).isEqualTo("This action is no longer allowed");
+            assertThat(getCurrentView()).isInstanceOf(CaseView.class);
+            assertThat(statusText()).isEqualTo("Approved");
+            assertThat(visibleActionButtons()).isEmpty();
         }
     }
 
@@ -358,6 +492,10 @@ class CaseViewTest extends AbstractViewTest {
     }
 
     // --- helpers -------------------------------------------------------------------------------------------------
+
+    CaseStatus statusOf(String title) {
+        return caseService.findById(caseIdByTitle(title)).orElseThrow().getStatus();
+    }
 
     void openNewCase() {
         navigate("case/new", CaseView.class);
