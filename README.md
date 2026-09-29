@@ -11,12 +11,13 @@ chosen in the top bar ("Act as").
 ## Requirements
 
 - Java 25 and Maven
-- For end-to-end tests: a Vaadin Pro license (`~/.vaadin/proKey` or `~/.vaadin/offlineKey`). Chrome for Testing is
-  downloaded automatically on the first run.
-  - The first run opens a browser so you can log in to vaadin.com, which creates `proKey`.
-  - Non-interactive environments such as CI need `offlineKey`, downloaded from vaadin.com.
-  - If Chromium is installed as a snap and fails with "DevToolsActivePort file doesn't exist", see the guarded
-    workaround in `AbstractIT`.
+- For end-to-end tests: a Vaadin Pro license (`~/.vaadin/proKey` or `~/.vaadin/offlineKey`).
+- The first end-to-end run opens a browser so you can log in to vaadin.com, which creates `proKey`.
+- Non-interactive environments such as CI need `offlineKey`, downloaded from vaadin.com.
+- For end-to-end tests: Chrome or Chromium. Selenium Manager uses the installed browser and downloads a matching
+  driver, or downloads Chrome for Testing if no browser is found.
+- If Chromium is installed as a snap and fails with "DevToolsActivePort file doesn't exist", see the guarded
+  workaround in `AbstractIT`.
 
 ## Running
 

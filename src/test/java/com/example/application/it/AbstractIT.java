@@ -3,8 +3,6 @@ package com.example.application.it;
 import com.vaadin.flow.component.notification.testbench.NotificationElement;
 import com.vaadin.testbench.BrowserTestBase;
 import com.vaadin.testbench.DriverSupplier;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
@@ -14,8 +12,8 @@ import org.openqa.selenium.chrome.ChromeOptions;
 
 /**
  * Base class for end-to-end tests in a real Chrome. The Maven "it" profile starts the application before the tests
- * run: {@code mvn verify -Pit} (add {@code -Dheadless=false} to watch). Selenium Manager downloads Chrome for Testing
- * and a matching driver on the first run. TestBench waits for Vaadin to finish each server round trip, so the tests
+ * run: {@code mvn verify -Pit} (add {@code -Dheadless=false} to watch). Selenium Manager uses the installed Chrome or
+ * Chromium and downloads a matching driver, or downloads Chrome for Testing if no browser is found. TestBench waits for Vaadin to finish each server round trip, so the tests
  * never sleep. BrowserTestBase takes a screenshot into error-screenshots/ when a test fails and quits the driver
  * afterwards.
  */
@@ -34,22 +32,6 @@ public abstract class AbstractIT extends BrowserTestBase implements DriverSuppli
         return new ChromeDriver(options);
     }
 
-    /**
-     * Chromium installed as a snap cannot use the temporary profile directory that ChromeDriver creates in /tmp
-     * ("DevToolsActivePort file doesn't exist"). Give it a profile directory inside its own snap storage instead.
-     */
-    private static void useSnapProfileDirectoryIfNeeded(ChromeOptions options) {
-        Path snapStorage = Path.of(System.getProperty("user.home"), "snap", "chromium", "common");
-        if (Files.isDirectory(snapStorage)) {
-            try {
-                Path profile = Files.createTempDirectory(snapStorage, "testbench-profile-");
-                options.addArguments("--user-data-dir=" + profile);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        }
-    }
-
     protected void open(String route) {
         getDriver().get("http://localhost:" + PORT + "/" + route);
     }
@@ -64,5 +46,17 @@ public abstract class AbstractIT extends BrowserTestBase implements DriverSuppli
 
     protected String firstNotificationText() {
         return $(NotificationElement.class).waitForFirst().getText();
+    }
+
+    /**
+     * Chromium installed as a snap cannot use the temporary profile directory that ChromeDriver creates in /tmp
+     * ("DevToolsActivePort file doesn't exist"). Give it one fixed profile directory inside its own snap storage
+     * instead. Delete this method if you don't use snap-packaged Chromium.
+     */
+    private static void useSnapProfileDirectoryIfNeeded(ChromeOptions options) {
+        Path snapStorage = Path.of(System.getProperty("user.home"), "snap", "chromium", "common");
+        if (Files.isDirectory(snapStorage)) {
+            options.addArguments("--user-data-dir=" + snapStorage.resolve("testbench-profile"));
+        }
     }
 }
